@@ -1,12 +1,13 @@
 import json
+
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
-
-from src.graph.state import AgentState, show_agent_reasoning
 from pydantic import BaseModel, Field
 from typing_extensions import Literal
-from src.utils.progress import progress
+
+from src.graph.state import AgentState, show_agent_reasoning
 from src.utils.llm import call_llm
+from src.utils.progress import progress
 
 
 class PortfolioDecision(BaseModel):
@@ -52,7 +53,10 @@ def portfolio_management_agent(state: AgentState):
         ticker_signals = {}
         for agent, signals in analyst_signals.items():
             if agent != "risk_management_agent" and ticker in signals:
-                ticker_signals[agent] = {"signal": signals[ticker]["signal"], "confidence": signals[ticker]["confidence"]}
+                ticker_signals[agent] = {
+                    "signal": signals[ticker]["signal"],
+                    "confidence": signals[ticker]["confidence"],
+                }
         signals_by_ticker[ticker] = ticker_signals
 
     progress.update_status("portfolio_manager", None, "Generating trading decisions")
@@ -75,7 +79,9 @@ def portfolio_management_agent(state: AgentState):
 
     # Print the decision if the flag is set
     if state["metadata"]["show_reasoning"]:
-        show_agent_reasoning({ticker: decision.model_dump() for ticker, decision in result.decisions.items()}, "Portfolio Manager")
+        show_agent_reasoning(
+            {ticker: decision.model_dump() for ticker, decision in result.decisions.items()}, "Portfolio Manager"
+        )
 
     progress.update_status("portfolio_manager", None, "Done")
 
@@ -188,7 +194,17 @@ def generate_trading_decision(
 
     # Create default factory for PortfolioManagerOutput
     def create_default_portfolio_output():
-        return PortfolioManagerOutput(decisions={ticker: PortfolioDecision(action="hold", quantity=0, confidence=0.0, reasoning="Error in portfolio management, defaulting to hold") for ticker in tickers})
+        return PortfolioManagerOutput(
+            decisions={
+                ticker: PortfolioDecision(
+                    action="hold",
+                    quantity=0,
+                    confidence=0.0,
+                    reasoning="Error in portfolio management, defaulting to hold",
+                )
+                for ticker in tickers
+            }
+        )
 
     return call_llm(
         prompt=prompt,

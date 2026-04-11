@@ -1,13 +1,11 @@
+import json
 import math
 
+import numpy as np
+import pandas as pd
 from langchain_core.messages import HumanMessage
 
 from src.graph.state import AgentState, show_agent_reasoning
-
-import json
-import pandas as pd
-import numpy as np
-
 from src.tools.api import get_prices, prices_to_df
 from src.utils.progress import progress
 
@@ -15,11 +13,11 @@ from src.utils.progress import progress
 def safe_float(value, default=0.0):
     """
     Safely convert a value to float, handling NaN cases
-    
+
     Args:
         value: The value to convert (can be pandas scalar, numpy value, etc.)
         default: Default value to return if the input is NaN or invalid
-    
+
     Returns:
         float: The converted value or default if NaN/invalid
     """
@@ -134,7 +132,9 @@ def technical_analyst_agent(state: AgentState):
                 },
             },
         }
-        progress.update_status("technical_analyst_agent", ticker, "Done", analysis=json.dumps(technical_analysis, indent=4))
+        progress.update_status(
+            "technical_analyst_agent", ticker, "Done", analysis=json.dumps(technical_analysis, indent=4)
+        )
 
     # Create the technical analyst message
     message = HumanMessage(

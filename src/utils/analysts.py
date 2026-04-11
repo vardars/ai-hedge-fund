@@ -7,14 +7,14 @@ from src.agents.cathie_wood import cathie_wood_agent
 from src.agents.charlie_munger import charlie_munger_agent
 from src.agents.fundamentals import fundamentals_analyst_agent
 from src.agents.michael_burry import michael_burry_agent
-from src.agents.phil_fisher import phil_fisher_agent
 from src.agents.peter_lynch import peter_lynch_agent
+from src.agents.phil_fisher import phil_fisher_agent
+from src.agents.rakesh_jhunjhunwala import rakesh_jhunjhunwala_agent
 from src.agents.sentiment import sentiment_analyst_agent
 from src.agents.stanley_druckenmiller import stanley_druckenmiller_agent
 from src.agents.technicals import technical_analyst_agent
 from src.agents.valuation import valuation_analyst_agent
 from src.agents.warren_buffett import warren_buffett_agent
-from src.agents.rakesh_jhunjhunwala import rakesh_jhunjhunwala_agent
 
 # Define analyst configuration - single source of truth
 ANALYST_CONFIG = {
@@ -126,7 +126,9 @@ ANALYST_CONFIG = {
 }
 
 # Derive ANALYST_ORDER from ANALYST_CONFIG for backwards compatibility
-ANALYST_ORDER = [(config["display_name"], key) for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])]
+ANALYST_ORDER = [
+    (config["display_name"], key) for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])
+]
 
 
 def get_analyst_nodes():
@@ -142,7 +144,7 @@ def get_agents_list():
             "display_name": config["display_name"],
             "description": config["description"],
             "investing_style": config["investing_style"],
-            "order": config["order"]
+            "order": config["order"],
         }
         for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])
     ]
@@ -157,11 +159,11 @@ def get_investing_style_display_names():
     """Get display names for investing styles."""
     return {
         "value_investing": "Value Investing",
-        "growth_investing": "Growth Investing", 
+        "growth_investing": "Growth Investing",
         "contrarian_activist": "Contrarian/Activist",
         "macro_global": "Macro/Global",
         "technical_analysis": "Technical Analysis",
-        "quantitative_analytical": "Quantitative/Analytical"
+        "quantitative_analytical": "Quantitative/Analytical",
     }
 
 
@@ -172,15 +174,17 @@ def get_agents_by_investing_style():
         style = config["investing_style"]
         if style not in groups:
             groups[style] = []
-        groups[style].append({
-            "key": key,
-            "display_name": config["display_name"],
-            "description": config["description"],
-            "order": config["order"]
-        })
-    
+        groups[style].append(
+            {
+                "key": key,
+                "display_name": config["display_name"],
+                "description": config["description"],
+                "order": config["order"],
+            }
+        )
+
     # Sort agents within each group by order
     for style in groups:
         groups[style].sort(key=lambda x: x["order"])
-    
+
     return groups

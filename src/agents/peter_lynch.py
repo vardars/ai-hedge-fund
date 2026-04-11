@@ -1,25 +1,28 @@
+import json
+
+from langchain_core.messages import HumanMessage
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel
+from typing_extensions import Literal
+
 from src.graph.state import AgentState, show_agent_reasoning
 from src.tools.api import (
-    get_financial_metrics,
-    get_market_cap,
-    search_line_items,
-    get_insider_trades,
     get_company_news,
+    get_financial_metrics,
+    get_insider_trades,
+    get_market_cap,
     get_prices,
+    search_line_items,
 )
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage
-from pydantic import BaseModel
-import json
-from typing_extensions import Literal
-from src.utils.progress import progress
 from src.utils.llm import call_llm
+from src.utils.progress import progress
 
 
 class PeterLynchSignal(BaseModel):
     """
     Container for the Peter Lynch-style output signal.
     """
+
     signal: Literal["bullish", "bearish", "neutral"]
     confidence: float
     reasoning: str
@@ -490,11 +493,7 @@ def generate_lynch_output(
     prompt = template.invoke({"analysis_data": json.dumps(analysis_data, indent=2), "ticker": ticker})
 
     def create_default_signal():
-        return PeterLynchSignal(
-            signal="neutral",
-            confidence=0.0,
-            reasoning="Error in analysis; defaulting to neutral"
-        )
+        return PeterLynchSignal(signal="neutral", confidence=0.0, reasoning="Error in analysis; defaulting to neutral")
 
     return call_llm(
         prompt=prompt,

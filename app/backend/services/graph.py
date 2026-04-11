@@ -1,13 +1,14 @@
 import asyncio
 import json
+
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
 
 from src.agents.portfolio_manager import portfolio_management_agent
 from src.agents.risk_manager import risk_management_agent
+from src.graph.state import AgentState
 from src.main import start
 from src.utils.analysts import ANALYST_CONFIG
-from src.graph.state import AgentState
 
 
 # Helper function to create the agent graph
@@ -53,7 +54,9 @@ async def run_graph_async(graph, portfolio, tickers, start_date, end_date, model
     # Use run_in_executor to run the synchronous function in a separate thread
     # so it doesn't block the event loop
     loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(None, lambda: run_graph(graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request))  # Use default executor
+    result = await loop.run_in_executor(
+        None, lambda: run_graph(graph, portfolio, tickers, start_date, end_date, model_name, model_provider, request)
+    )  # Use default executor
     return result
 
 

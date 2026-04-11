@@ -1,27 +1,26 @@
+import itertools
 import sys
-
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-import questionary
 
 import matplotlib.pyplot as plt
-import pandas as pd
-from colorama import Fore, Style, init
 import numpy as np
-import itertools
+import pandas as pd
+import questionary
+from colorama import Fore, init, Style
+from dateutil.relativedelta import relativedelta
+from typing_extensions import Callable
 
-from src.llm.models import LLM_ORDER, OLLAMA_LLM_ORDER, get_model_info, ModelProvider
-from src.utils.analysts import ANALYST_ORDER
+from src.llm.models import get_model_info, LLM_ORDER, ModelProvider, OLLAMA_LLM_ORDER
 from src.main import run_hedge_fund
 from src.tools.api import (
     get_company_news,
-    get_price_data,
-    get_prices,
     get_financial_metrics,
     get_insider_trades,
+    get_price_data,
+    get_prices,
 )
-from src.utils.display import print_backtest_results, format_backtest_row
-from typing_extensions import Callable
+from src.utils.analysts import ANALYST_ORDER
+from src.utils.display import format_backtest_row, print_backtest_results
 from src.utils.ollama import ensure_ollama_and_model
 
 init(autoreset=True)
@@ -66,7 +65,16 @@ class Backtester:
             "cash": initial_capital,
             "margin_used": 0.0,  # total margin usage across all short positions
             "margin_requirement": initial_margin_requirement,  # The margin ratio required for shorts
-            "positions": {ticker: {"long": 0, "short": 0, "long_cost_basis": 0.0, "short_cost_basis": 0.0, "short_margin_used": 0.0} for ticker in tickers},  # Number of shares held long  # Number of shares held short  # Average cost basis per share (long)  # Average cost basis per share (short)  # Dollars of margin used for this ticker's short
+            "positions": {
+                ticker: {
+                    "long": 0,
+                    "short": 0,
+                    "long_cost_basis": 0.0,
+                    "short_cost_basis": 0.0,
+                    "short_margin_used": 0.0,
+                }
+                for ticker in tickers
+            },  # Number of shares held long  # Number of shares held short  # Average cost basis per share (long)  # Average cost basis per share (short)  # Dollars of margin used for this ticker's short
             "realized_gains": {
                 ticker: {
                     "long": 0.0,  # Realized gains from long positions
@@ -293,7 +301,14 @@ class Backtester:
 
         dates = pd.date_range(self.start_date, self.end_date, freq="B")
         table_rows = []
-        performance_metrics = {"sharpe_ratio": None, "sortino_ratio": None, "max_drawdown": None, "long_short_ratio": None, "gross_exposure": None, "net_exposure": None}
+        performance_metrics = {
+            "sharpe_ratio": None,
+            "sortino_ratio": None,
+            "max_drawdown": None,
+            "long_short_ratio": None,
+            "gross_exposure": None,
+            "net_exposure": None,
+        }
 
         print("\nStarting backtest...")
 
@@ -326,7 +341,9 @@ class Backtester:
                             break
                         current_prices[ticker] = price_data.iloc[-1]["close"]
                     except Exception as e:
-                        print(f"Error fetching price for {ticker} between {previous_date_str} and {current_date_str}: {e}")
+                        print(
+                            f"Error fetching price for {ticker} between {previous_date_str} and {current_date_str}: {e}"
+                        )
                         missing_data = True
                         break
 
@@ -379,7 +396,17 @@ class Backtester:
             long_short_ratio = long_exposure / short_exposure if short_exposure > 1e-9 else float("inf")
 
             # Track each day's portfolio value in self.portfolio_values
-            self.portfolio_values.append({"Date": current_date, "Portfolio Value": total_value, "Long Exposure": long_exposure, "Short Exposure": short_exposure, "Gross Exposure": gross_exposure, "Net Exposure": net_exposure, "Long/Short Ratio": long_short_ratio})
+            self.portfolio_values.append(
+                {
+                    "Date": current_date,
+                    "Portfolio Value": total_value,
+                    "Long Exposure": long_exposure,
+                    "Short Exposure": short_exposure,
+                    "Gross Exposure": gross_exposure,
+                    "Net Exposure": net_exposure,
+                    "Long/Short Ratio": long_short_ratio,
+                }
+            )
 
             # ---------------------------------------------------------------
             # 3) Build the table rows to display
@@ -532,8 +559,13 @@ class Backtester:
         print(f"Total Return: {Fore.GREEN if total_return >= 0 else Fore.RED}{total_return:.2f}%{Style.RESET_ALL}")
 
         # Print realized P&L for informational purposes only
-        total_realized_gains = sum(self.portfolio["realized_gains"][ticker]["long"] + self.portfolio["realized_gains"][ticker]["short"] for ticker in self.tickers)
-        print(f"Total Realized Gains/Losses: {Fore.GREEN if total_realized_gains >= 0 else Fore.RED}${total_realized_gains:,.2f}{Style.RESET_ALL}")
+        total_realized_gains = sum(
+            self.portfolio["realized_gains"][ticker]["long"] + self.portfolio["realized_gains"][ticker]["short"]
+            for ticker in self.tickers
+        )
+        print(
+            f"Total Realized Gains/Losses: {Fore.GREEN if total_realized_gains >= 0 else Fore.RED}${total_realized_gains:,.2f}{Style.RESET_ALL}"
+        )
 
         # Plot the portfolio value over time
         plt.figure(figsize=(12, 6))
@@ -593,8 +625,12 @@ class Backtester:
         # Maximum Consecutive Wins / Losses
         returns_binary = (performance_df["Daily Return"] > 0).astype(int)
         if len(returns_binary) > 0:
-            max_consecutive_wins = max((len(list(g)) for k, g in itertools.groupby(returns_binary) if k == 1), default=0)
-            max_consecutive_losses = max((len(list(g)) for k, g in itertools.groupby(returns_binary) if k == 0), default=0)
+            max_consecutive_wins = max(
+                (len(list(g)) for k, g in itertools.groupby(returns_binary) if k == 1), default=0
+            )
+            max_consecutive_losses = max(
+                (len(list(g)) for k, g in itertools.groupby(returns_binary) if k == 0), default=0
+            )
         else:
             max_consecutive_wins = 0
             max_consecutive_losses = 0
@@ -685,7 +721,10 @@ if __name__ == "__main__":
             sys.exit(0)
         else:
             selected_analysts = choices
-            print(f"\nSelected analysts: " f"{', '.join(Fore.GREEN + choice.title().replace('_', ' ') + Style.RESET_ALL for choice in choices)}")
+            print(
+                f"\nSelected analysts: "
+                f"{', '.join(Fore.GREEN + choice.title().replace('_', ' ') + Style.RESET_ALL for choice in choices)}"
+            )
 
     # Select LLM model based on whether Ollama is being used
     model_name = ""
@@ -724,7 +763,9 @@ if __name__ == "__main__":
             sys.exit(1)
 
         model_provider = ModelProvider.OLLAMA.value
-        print(f"\nSelected {Fore.CYAN}Ollama{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n")
+        print(
+            f"\nSelected {Fore.CYAN}Ollama{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n"
+        )
     else:
         # Use the standard cloud-based LLM selection
         model_choice = questionary.select(
@@ -743,7 +784,7 @@ if __name__ == "__main__":
         if not model_choice:
             print("\n\nInterrupt received. Exiting...")
             sys.exit(0)
-        
+
         model_name, model_provider = model_choice
 
         model_info = get_model_info(model_name, model_provider)
@@ -754,7 +795,9 @@ if __name__ == "__main__":
                     print("\n\nInterrupt received. Exiting...")
                     sys.exit(0)
 
-            print(f"\nSelected {Fore.CYAN}{model_provider}{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n")
+            print(
+                f"\nSelected {Fore.CYAN}{model_provider}{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n"
+            )
         else:
             model_provider = "Unknown"
             print(f"\nSelected model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n")

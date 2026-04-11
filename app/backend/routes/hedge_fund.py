@@ -1,16 +1,27 @@
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
 import asyncio
 
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+
+from app.backend.models.events import (
+    CompleteEvent,
+    ErrorEvent,
+    ProgressUpdateEvent,
+    StartEvent,
+)
 from app.backend.models.schemas import ErrorResponse, HedgeFundRequest
-from app.backend.models.events import StartEvent, ProgressUpdateEvent, ErrorEvent, CompleteEvent
-from app.backend.services.graph import create_graph, parse_hedge_fund_response, run_graph_async
+from app.backend.services.graph import (
+    create_graph,
+    parse_hedge_fund_response,
+    run_graph_async,
+)
 from app.backend.services.portfolio import create_portfolio
-from src.utils.progress import progress
-from src.utils.analysts import get_agents_list
 from src.llm.models import get_models_list
+from src.utils.analysts import get_agents_list
+from src.utils.progress import progress
 
 router = APIRouter(prefix="/hedge-fund")
+
 
 @router.post(
     path="/run",
@@ -44,7 +55,9 @@ async def run_hedge_fund(request: HedgeFundRequest):
 
             # Simple handler to add updates to the queue
             def progress_handler(agent_name, ticker, status, analysis, timestamp):
-                event = ProgressUpdateEvent(agent=agent_name, ticker=ticker, status=status, timestamp=timestamp, analysis=analysis)
+                event = ProgressUpdateEvent(
+                    agent=agent_name, ticker=ticker, status=status, timestamp=timestamp, analysis=analysis
+                )
                 progress_queue.put_nowait(event)
 
             # Register our handler with the progress tracker
@@ -107,6 +120,7 @@ async def run_hedge_fund(request: HedgeFundRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred while processing the request: {str(e)}")
 
+
 @router.get(
     path="/agents",
     responses={
@@ -135,4 +149,3 @@ async def get_language_models():
         return {"models": get_models_list()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve models: {str(e)}")
-
