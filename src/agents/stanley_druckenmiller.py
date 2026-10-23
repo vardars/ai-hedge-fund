@@ -1,20 +1,22 @@
+import json
+import statistics
+
+from langchain_core.messages import HumanMessage
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel
+from typing_extensions import Literal
+
 from src.graph.state import AgentState, show_agent_reasoning
 from src.tools.api import (
-    get_financial_metrics,
-    get_market_cap,
-    search_line_items,
-    get_insider_trades,
     get_company_news,
+    get_financial_metrics,
+    get_insider_trades,
+    get_market_cap,
     get_prices,
+    search_line_items,
 )
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage
-from pydantic import BaseModel
-import json
-from typing_extensions import Literal
-from src.utils.progress import progress
 from src.utils.llm import call_llm
-import statistics
+from src.utils.progress import progress
 
 
 class StanleyDruckenmillerSignal(BaseModel):
@@ -157,7 +159,7 @@ def stanley_druckenmiller_agent(state: AgentState):
     state["data"]["analyst_signals"]["stanley_druckenmiller_agent"] = druck_analysis
 
     progress.update_status("stanley_druckenmiller_agent", None, "Done")
-    
+
     return {"messages": [message], "data": state["data"]}
 
 
@@ -531,8 +533,8 @@ def generate_druckenmiller_output(
     template = ChatPromptTemplate.from_messages(
         [
             (
-              "system",
-              """You are a Stanley Druckenmiller AI agent, making investment decisions using his principles:
+                "system",
+                """You are a Stanley Druckenmiller AI agent, making investment decisions using his principles:
             
               1. Seek asymmetric risk-reward opportunities (large upside, limited downside).
               2. Emphasize growth, momentum, and market sentiment.
@@ -560,8 +562,8 @@ def generate_druckenmiller_output(
               """,
             ),
             (
-              "human",
-              """Based on the following analysis, create a Druckenmiller-style investment signal.
+                "human",
+                """Based on the following analysis, create a Druckenmiller-style investment signal.
 
               Analysis Data for {ticker}:
               {analysis_data}
@@ -581,9 +583,7 @@ def generate_druckenmiller_output(
 
     def create_default_signal():
         return StanleyDruckenmillerSignal(
-            signal="neutral",
-            confidence=0.0,
-            reasoning="Error in analysis, defaulting to neutral"
+            signal="neutral", confidence=0.0, reasoning="Error in analysis, defaulting to neutral"
         )
 
     return call_llm(

@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+
 from src.llm.models import ModelProvider
 
 
@@ -42,10 +44,7 @@ class HedgeFundRequest(BaseModel):
         if self.agent_models:
             for config in self.agent_models:
                 if config.agent_id == agent_id:
-                    return (
-                        config.model_name or self.model_name,
-                        config.model_provider or self.model_provider
-                    )
+                    return (config.model_name or self.model_name, config.model_provider or self.model_provider)
         # Fallback to global model settings
         return self.model_name, self.model_provider
 
@@ -92,6 +91,7 @@ class FlowResponse(BaseModel):
 
 class FlowSummaryResponse(BaseModel):
     """Lightweight flow response without nodes/edges for listing"""
+
     id: int
     name: str
     description: Optional[str]

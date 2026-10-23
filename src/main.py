@@ -1,24 +1,24 @@
+import argparse
+import json
 import sys
+from datetime import datetime
 
+import questionary
+from colorama import Fore, init, Style
+from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph
-from colorama import Fore, Style, init
-import questionary
+
 from src.agents.portfolio_manager import portfolio_management_agent
 from src.agents.risk_manager import risk_management_agent
 from src.graph.state import AgentState
-from src.utils.display import print_trading_output
+from src.llm.models import get_model_info, LLM_ORDER, ModelProvider, OLLAMA_LLM_ORDER
 from src.utils.analysts import ANALYST_ORDER, get_analyst_nodes
-from src.utils.progress import progress
-from src.llm.models import LLM_ORDER, OLLAMA_LLM_ORDER, get_model_info, ModelProvider
+from src.utils.display import print_trading_output
 from src.utils.ollama import ensure_ollama_and_model
-
-import argparse
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from src.utils.progress import progress
 from src.utils.visualize import save_graph_as_png
-import json
 
 # Load environment variables from .env file
 load_dotenv()
@@ -134,8 +134,12 @@ def create_workflow(selected_analysts=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the hedge fund trading system")
-    parser.add_argument("--initial-cash", type=float, default=100000.0, help="Initial cash position. Defaults to 100000.0)")
-    parser.add_argument("--margin-requirement", type=float, default=0.0, help="Initial margin requirement. Defaults to 0.0")
+    parser.add_argument(
+        "--initial-cash", type=float, default=100000.0, help="Initial cash position. Defaults to 100000.0)"
+    )
+    parser.add_argument(
+        "--margin-requirement", type=float, default=0.0, help="Initial margin requirement. Defaults to 0.0"
+    )
     parser.add_argument("--tickers", type=str, required=True, help="Comma-separated list of stock ticker symbols")
     parser.add_argument(
         "--start-date",
@@ -174,7 +178,9 @@ if __name__ == "__main__":
         sys.exit(0)
     else:
         selected_analysts = choices
-        print(f"\nSelected analysts: {', '.join(Fore.GREEN + choice.title().replace('_', ' ') + Style.RESET_ALL for choice in choices)}\n")
+        print(
+            f"\nSelected analysts: {', '.join(Fore.GREEN + choice.title().replace('_', ' ') + Style.RESET_ALL for choice in choices)}\n"
+        )
 
     # Select LLM model based on whether Ollama is being used
     model_name = ""
@@ -213,7 +219,9 @@ if __name__ == "__main__":
             sys.exit(1)
 
         model_provider = ModelProvider.OLLAMA.value
-        print(f"\nSelected {Fore.CYAN}Ollama{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n")
+        print(
+            f"\nSelected {Fore.CYAN}Ollama{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n"
+        )
     else:
         # Use the standard cloud-based LLM selection
         model_choice = questionary.select(
@@ -244,7 +252,9 @@ if __name__ == "__main__":
                     print("\n\nInterrupt received. Exiting...")
                     sys.exit(0)
 
-            print(f"\nSelected {Fore.CYAN}{model_provider}{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n")
+            print(
+                f"\nSelected {Fore.CYAN}{model_provider}{Style.RESET_ALL} model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n"
+            )
         else:
             model_provider = "Unknown"
             print(f"\nSelected model: {Fore.GREEN + Style.BRIGHT}{model_name}{Style.RESET_ALL}\n")

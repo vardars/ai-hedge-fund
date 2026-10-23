@@ -1,10 +1,12 @@
 """Helper functions for LLM"""
 
 import json
+
 from pydantic import BaseModel
+
+from src.graph.state import AgentState
 from src.llm.models import get_model, get_model_info
 from src.utils.progress import progress
-from src.graph.state import AgentState
 
 
 def call_llm(
@@ -29,11 +31,11 @@ def call_llm(
     Returns:
         An instance of the specified Pydantic model
     """
-    
+
     # Extract model configuration if state is provided and agent_name is available
     if state and agent_name:
         model_name, model_provider = get_agent_model_config(state, agent_name)
-    
+
     # Fallback to defaults if still not provided
     if not model_name:
         model_name = "gpt-4o"
@@ -123,23 +125,23 @@ def get_agent_model_config(state, agent_name):
     """
     request = state.get("metadata", {}).get("request")
 
-    if agent_name == 'portfolio_manager':
+    if agent_name == "portfolio_manager":
         # Get the model and provider from state metadata
         model_name = state.get("metadata", {}).get("model_name", "gpt-4o")
         model_provider = state.get("metadata", {}).get("model_provider", "OPENAI")
         return model_name, model_provider
-    
-    if request and hasattr(request, 'get_agent_model_config'):
+
+    if request and hasattr(request, "get_agent_model_config"):
         # Get agent-specific model configuration
         model_name, model_provider = request.get_agent_model_config(agent_name)
-        return model_name, model_provider.value if hasattr(model_provider, 'value') else str(model_provider)
-    
+        return model_name, model_provider.value if hasattr(model_provider, "value") else str(model_provider)
+
     # Fall back to global configuration
     model_name = state.get("metadata", {}).get("model_name", "gpt-4o")
     model_provider = state.get("metadata", {}).get("model_provider", "OPENAI")
-    
+
     # Convert enum to string if necessary
-    if hasattr(model_provider, 'value'):
+    if hasattr(model_provider, "value"):
         model_provider = model_provider.value
-    
+
     return model_name, model_provider
